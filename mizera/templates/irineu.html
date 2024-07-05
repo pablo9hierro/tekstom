@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+ 
+</body>
+
+<script>
+    const searchForm = document.getElementById('search-form');
+    const searchInput = document.getElementById('search-input');
+    const searchResults = document.getElementById('search-results');
+
+    searchInput.addEventListener('input', function() {
+        // Limpa a lista de sugestões
+        searchResults.innerHTML = '';
+
+        // Obtém o valor atual da barra de pesquisa
+        const query = searchInput.value.trim();
+
+        // Se a consulta estiver vazia, não faz nada
+        if (query === '') return;
+
+        // Faz uma requisição AJAX para buscar sugestões
+        fetch(`/search/?query=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                // Adiciona os resultados à lista de sugestões
+                data.forEach(result => {
+                    const li = document.createElement('li');
+                    li.textContent = result.numero;
+                    searchResults.appendChild(li);
+                });
+            })
+            .catch(error => console.error('Erro ao buscar sugestões:', error));
+    });
+</script>
+
+</html>

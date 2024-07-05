@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dash</title>
+    <style>
+        /* Estilização opcional para os botões e barra de pesquisa */
+        .btn {
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+        }
+        
+        .barra-de-pesquisa {
+            margin: 10px;
+            padding: 5px;
+        }
+        
+        .resultado-busca {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <button id="btnVerRelatorios" class="btn">Ver Relatórios</button>
+    <input type="text" id="barraDePesquisa" class="barra-de-pesquisa" placeholder="Pesquisar...">
+    <button id="btnBuscar" class="btn">Buscar</button>
+    
+    <!-- Container para os resultados da pesquisa -->
+    <div id="resultados" class="resultado-busca"></div>
+</body>
+<script>
+    document.getElementById('btnVerRelatorios').addEventListener('click', function() {
+        alert('Ver relatórios clicado');
+    });
+
+    document.getElementById('btnBuscar').addEventListener('click', function() {
+        // Limpar resultados anteriores
+        document.getElementById('resultados').innerHTML = '';
+        
+        // Obter o valor da barra de pesquisa
+        var termoPesquisa = document.getElementById('barraDePesquisa').value.trim();
+        
+        // Verificar se há um termo de pesquisa
+        if (termoPesquisa !== '') {
+            // Fazer requisição AJAX para buscar números de telefone
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', '/buscar_numero_telefone/?termo=' + encodeURIComponent(termoPesquisa), true);
+            xhr.onload = function() {
+                if (xhr.status >= 200 && xhr.status < 400) {
+                    var data = JSON.parse(xhr.responseText);
+                    // Renderizar botões para cada resultado encontrado
+                    data.forEach(function(numero) {
+                        var btn = document.createElement('button');
+                        btn.className = 'btn';
+                        btn.textContent = numero.numero;
+                        btn.addEventListener('click', function() {
+                            alert('Número de telefone clicado: ' + numero.numero);
+                            // Adicionar ação desejada ao clicar no número de telefone
+                        });
+                        document.getElementById('resultados').appendChild(btn);
+                    });
+                } else {
+                    console.error('Erro ao buscar números de telefone:', xhr.statusText);
+                }
+            };
+            xhr.onerror = function() {
+                console.error('Erro ao buscar números de telefone.');
+            };
+            xhr.send();
+        } else {
+            alert('Digite um termo de pesquisa válido.');
+        }
+    });
+</script>
+</html>
