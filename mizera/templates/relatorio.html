@@ -1,13 +1,160 @@
 <!DOCTYPE html>
 <html>
 <head>
-
     <title>Relatório</title>
     <style>
-        /* Estilos CSS */
+        .btn {
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+        }
+        
+        .barra-de-pesquisa {
+            margin: 10px;
+            padding: 5px;
+        }
+        
+        .resultado-busca {
+            margin-top: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        .form-button {
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        #formOuro {
+            display: none;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
+    <h1 id="numeroClicado">Número Clicado: {{ numero }}</h1>
+    <button id="btnIniciarNovoRelatorio" class="btn">Iniciar Novo Relatório</button>
+    <button id="btnVerRelatoriosRelacionados" class="btn">Ver Relatórios Relacionados ao Número</button>
+    <input type="text" id="barraDePesquisa" class="barra-de-pesquisa" placeholder="Pesquisar...">
+    <button id="btnBuscar" class="btn">Buscar</button>
     
+    <div id="resultadosPesquisa" class="resultado-busca"></div>
+
+    <div id="formOuro">
+        <h2>Novo Relatório para o Número: {{ numero }}</h2>
+        <form id="formRelatorioOuro">
+            <input type="hidden" name="numero_telefone" value="{{ numero }}">
+            <textarea name="texto_livre" placeholder="Texto Livre" required></textarea><br>
+            <input type="number" name="velocidade_resposta" min="0" max="10" required><br>
+            <input type="number" name="nivel_engajamento" min="0" max="10" required><br>
+            <input type="checkbox" name="comprometido" value="true"><br>
+            <input type="text" name="apelido" placeholder="Apelido"><br>
+            <button type="button" onclick="enviarRelatorio()">Enviar</button>
+        </form>
+    </div>
+
+    <script>
+        var numeroClicado = "{{ numero }}";
+        document.getElementById('numeroClicado').textContent = 'Número Clicado: ' + numeroClicado;
+
+        document.getElementById('btnIniciarNovoRelatorio').addEventListener('click', function() {
+            document.getElementById('formOuro').style.display = 'block';
+        });
+
+        document.getElementById('btnVerRelatoriosRelacionados').addEventListener('click', function() {
+            alert('Ver relatórios relacionados ao número ' + numeroClicado + ' clicado');
+        });
+
+        document.getElementById('btnBuscar').addEventListener('click', function() {
+            var termoPesquisa = document.getElementById('barraDePesquisa').value.trim();
+            if (termoPesquisa !== '') {
+                buscarResultados(termoPesquisa);
+            } else {
+                alert('Digite um termo de pesquisa válido.');
+            }
+        });
+
+        function buscarResultados(termoPesquisa) {
+            document.getElementById('resultadosPesquisa').innerHTML = '';
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', '/buscar_numero_telefone/?termo=' + encodeURIComponent(termoPesquisa), true);
+            xhr.onload = function() {
+                if (xhr.status >= 200 && xhr.status < 400) {
+                    var data = JSON.parse(xhr.responseText);
+                    data.forEach(function(numero) {
+                        var btn = document.createElement('button');
+                        btn.className = 'btn';
+                        btn.textContent = numero.numero;
+                        btn.addEventListener('click', function() {
+                            window.location.href = '/relatorio/' + encodeURIComponent(numero.numero);
+                        });
+                        document.getElementById('resultadosPesquisa').appendChild(btn);
+                    });
+                } else {
+                    console.error('Erro ao buscar números de telefone:', xhr.statusText);
+                }
+            };
+            xhr.onerror = function() {
+                console.error('Erro ao buscar números de telefone.');
+            };
+            xhr.send();
+        }
+
+        function enviarRelatorio() {
+        var form = document.getElementById('formRelatorioOuro');
+        var formData = new FormData(form);
+
+        fetch('/salvar_relatorio/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')  // Certifique-se de que a função getCookie está definida
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert('Dados enviados com sucesso');
+            console.log(data);
+            // Lógica adicional após sucesso
+        })
+        .catch(error => {
+            console.error('Erro ao enviar os dados:', error);
+            // Tratar erros
+        });
+    }
+
+
+    // Função para obter o valor de um cookie pelo nome
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            // Verifica se este cookie é o que estamos procurando
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+
+    </script>
 </body>
 </html>

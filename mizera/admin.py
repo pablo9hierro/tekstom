@@ -1,3 +1,5 @@
 from django.contrib import admin
+from .models import NumeroTelefone, Relatorio
 
-# Register your models here.
+admin.site.register(NumeroTelefone)
+admin.site.register(Relatorio)

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Extrato de Relatórios</title>
+    <!-- Seus estilos CSS -->
+    <style>
+        /* Estilos para o extrato */
+    </style>
+</head>
+<body>
+    <h1>Extrato de Relatórios para o Número: {{ numero }}</h1>
+    <div id="relatoriosExtrato">
+        {% for relatorio in relatorios %}
+            <div class="relatorio">
+                <h2>Relatório ID: {{ relatorio.id }}</h2>
+                <p>Texto Livre: {{ relatorio.texto_livre }}</p>
+                <p>Velocidade de Resposta: {{ relatorio.velocidade_resposta }}</p>
+                <p>Nível de Engajamento: {{ relatorio.nivel_engajamento }}</p>
+                <p>Comprometido: {{ relatorio.comprometido }}</p>
+                <p>Apelido: {{ relatorio.apelido }}</p>
+            </div>
+        {% empty %}
+            <p>Nenhum relatório encontrado para este número.</p>
+        {% endfor %}
+    </div>
+</body>
+</html>
