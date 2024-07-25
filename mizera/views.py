@@ -4,16 +4,28 @@ from mizera.models import NumeroTelefone, Relatorio
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import get_object_or_404
+from django.db.models import Q
 
+
+def relatorio(request, numero):
+    numero_telefone = get_object_or_404(NumeroTelefone, numero=numero)
+    apelido = numero_telefone.relatorio_set.first().apelido if numero_telefone.relatorio_set.exists() else ''
+    context = {
+        'numero': numero_telefone.numero,
+        'apelido': apelido
+    }
+    return render(request, 'relatorio.html', context)
 
 def relatorio_numero(request, numero):
     
     return render(request, 'relatorio.html', {'numero': numero})
 
+def todosforms(request):
+    # Buscar todos os relatórios
+    relatorios = Relatorio.objects.all()
 
-def extrato_relatorios(request, numero):
-    relatorios = Relatorio.objects.filter(numero_telefone=numero)
-    #return render(request, 'seuapp/extrato.html', {'numero': numero, 'relatorios': relatorios})
+    # Renderizar o template com os dados dos relatórios
+    return render(request, 'todosforms.html', {'relatorios': relatorios})
 
 
 @csrf_exempt
@@ -31,15 +43,8 @@ def salvar_relatorio(request):
             # Verifique se os dados estão chegando corretamente
             print(f'Dados recebidos: {numero}, {texto_livre}, ...')
 
-            # Busque o objeto NumeroTelefone pelo número
-            try:
-                numero_telefones = NumeroTelefone.objects.filter(numero=numero)
-                if numero_telefones.exists():
-                    numero_telefone = numero_telefones.first()  # Pega o primeiro objeto retornado
-                else:
-                    return JsonResponse({'error': 'Número de telefone não encontrado'}, status=404)
-            except NumeroTelefone.DoesNotExist:
-                return JsonResponse({'error': 'Número de telefone não encontrado'}, status=404)
+            # Busque ou crie o objeto NumeroTelefone pelo número
+            numero_telefone, created = NumeroTelefone.get_or_create(numero)
 
             # Corrigir o valor de comprometido para um booleano
             if comprometido == 'true':  # Verifica se é a string 'true'
@@ -50,7 +55,7 @@ def salvar_relatorio(request):
                 # Caso o valor não seja 'true' nem 'false', defina um valor padrão
                 comprometido = False  # Ou outro valor padrão que faça sentido para o seu caso
 
-            # Crie um novo relatório
+            # Crie um novo relatório associado ao número de telefone encontrado ou criado
             relatorio = Relatorio.objects.create(
                 numero_telefone=numero_telefone,
                 texto_livre=texto_livre,
@@ -72,13 +77,33 @@ def salvar_relatorio(request):
 
 def buscar_numero_telefone(request):
     if request.method == 'GET' and 'termo' in request.GET:
-        termo_pesquisa = request.GET['termo']
-        # Fazer a consulta no banco de dados para buscar números de telefone semelhantes
-        resultados = NumeroTelefone.objects.filter(numero__icontains=termo_pesquisa)[:10]  # Limitar a 10 resultados
-        numeros = [{'numero': numero.numero} for numero in resultados]
-        return JsonResponse(numeros, safe=False)
+        termo_pesquisa = request.GET['termo'].strip()
+        
+        if not termo_pesquisa:
+            return JsonResponse({'error': 'Termo de pesquisa inválido'}, status=400)
+
+        resultados = NumeroTelefone.objects.filter(
+            Q(numero__icontains=termo_pesquisa) | Q(relatorio__apelido__icontains=termo_pesquisa)
+        ).distinct()[:10]  # Limitar a 10 resultados
+        
+        numeros = [{'numero': numero.numero, 'apelido': numero.relatorio_set.first().apelido if numero.relatorio_set.exists() else ''} for numero in resultados]
+        
+        if numeros:
+            return JsonResponse(numeros, safe=False)
+        else:
+            return JsonResponse({'message': 'Nenhum resultado encontrado'}, status=404)
     else:
         return JsonResponse({'error': 'Requisição inválida'}, status=400)
+    
+def pagina_extrato(request):
+    numero_telefone = request.GET.get('numero')
+    numero_telefone_obj = get_object_or_404(NumeroTelefone, numero=numero_telefone)
+    relatorios = Relatorio.objects.filter(numero_telefone=numero_telefone_obj)
+
+    return render(request, 'extrato.html', {
+        'numero': numero_telefone,
+        'relatorios': relatorios,
+    })
 
 def upload_json(request):
     if request.method == 'POST' and request.FILES.get('json_file'):

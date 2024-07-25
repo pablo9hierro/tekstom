@@ -3,10 +3,24 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 class NumeroTelefone(models.Model):
-    numero = models.CharField(max_length=11, unique=True)  # Campo único para o número de telefone
+    numero = models.CharField(max_length=11, unique=True, null=True)  # Campo único para o número de telefone
 
     def __str__(self):
         return self.numero
+
+    @classmethod
+    def get_or_create(cls, numero):
+        # Método para buscar ou criar um número de telefone único
+        try:
+            instance, created = cls.objects.get_or_create(numero=numero)
+            return instance, created
+        except cls.MultipleObjectsReturned:
+            # Em caso de múltiplos objetos retornados (duplicados), exclua todos, exceto o primeiro
+            duplicates = cls.objects.filter(numero=numero)
+            instance_to_keep = duplicates.first()
+            for duplicate in duplicates[1:]:
+                duplicate.delete()
+            return instance_to_keep, False
 
 class Relatorio(models.Model):
     numero_telefone = models.ForeignKey(NumeroTelefone, on_delete=models.CASCADE)

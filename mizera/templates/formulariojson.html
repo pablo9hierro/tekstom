@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Upload JSON File</title>
@@ -16,11 +17,11 @@
     </script>
 </head>
 <body onload="showAlert()">
-    <h2>Upload JSON File</h2>
-    <form method="post" enctype="multipart/form-data">
+    <h2>Upload JSON File</h2 class="input-group mb-3">
+    <form method="post" enctype="multipart/form-data" class="input-group-prepend">
         {% csrf_token %}
-        <input type="file" name="json_file" accept=".json" required>
-        <button type="submit">Submit</button>
+        <input type="file" name="json_file" accept=".json" required class="input-group-text">
+        <button type="submit" class="btn btn-primary" data-toggle="button" aria-pressed="false" autocomplete="off">Submit</button>
     </form>
 </body>
 </html>
